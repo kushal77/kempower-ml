@@ -1,92 +1,81 @@
-# Report on EV Charging Dataset Clustering and SoH Labeling
-
----
+# EV Charging Dataset -- EDA, Clustering, and SoH Labeling Review
 
 ## 1. Objective
 
-The notebook performs an exploratory data analysis (EDA) and unsupervised clustering on a 50k-row EV charging dataset (`50Ksample.csv`).  
+This notebook performs exploratory data analysis (EDA) and unsupervised
+clustering on a 50k-row EV charging dataset (`50Ksample.csv`). The main
+goals are:
 
-The main goals are:
-
-- Understand the basic structure and distribution of key operational variables.
-- Cluster charging sessions using K-Means on selected numeric features.
-- Visualize clusters using PCA (2D projection).
-- Assign an approximate **State of Health (SoH)** label to each cluster using simple rules based on cluster centroids.
-
----
+-   Examine basic structure and distribution of key operational
+    variables.
+-   Apply **K-Means clustering** on selected numeric features.
+-   Visualize clusters using **PCA** (2D projection).
+-   Assign approximate **State of Health (SoH)** labels to clusters.
 
 ## 2. Data Description
 
-The dataset is loaded and contains **50,000** records with the following key columns:
+### Categorical Features
 
-- **Categorical**
-  - `transactionId` – unique session identifier.
-  - `country` – e.g., *United Kingdom, Finland, Norway*.
-  - `EVModel` – various EV models (Kia, Mercedes, Lexus, etc.).
-  - `weekday` – day of the week (string).
+-   `transactionId`
+-   `country`
+-   `EVModel`
+-   `weekday`
 
-- **Temporal / index-like**
-  - `year` – mainly 2024–2025.
-  - `month` – 1 to 12.
-  - `quarter` – 1 to 4.
-  - `sampleTime10sIncrement` – an integer-like counter representing time steps (e.g., 10, 470, 960, …).
+### Temporal Features
 
-- **Operational / electrical**
-  - `soc` – State of Charge [%], 0–100.
-  - `tempC` – temperature [°C], approx −33 to 39.
-  - `avgPowerW` – average power in watts (mean ≈ 58,372 W).
-  - `avgCurrentA` – average current (mean ≈ 144 A).
-  - `avgVoltageV` – average voltage (mean ≈ 406 V).
+-   `year`, `month`, `quarter`
+-   `sampleTime10sIncrement`
 
-### 2.1 Summary Statistics (Selected)
+### Operational / Electrical
 
-From `df.describe()`:
+-   `soc`, `tempC`, `avgPowerW`, `avgCurrentA`, `avgVoltageV`
 
-- `soc`  
-  - Mean ≈ 59.6, std ≈ 22.3, range 0–100.
+Dataset had zero missing values and expected statistical ranges.
 
-- `tempC`  
-  - Mean ≈ 8.2°C, std ≈ 9.0°C, min −33°C, max 39°C.
+## 3. EDA Summary
 
-- `sampleTime10sIncrement`  
-  - Mean ≈ 1173.7, std ≈ 928.3, captures session length in 10s units.
+-   Histograms for power, current, voltage.
+-   Correlation matrix of major numeric fields.
+-   Patterns consistent with fast-charging behaviors.
 
-- `avgPowerW`  
-  - Mean ≈ 58.4 kW, std ≈ 33.8 kW, indicating a wide spread of charging power.
+## 4. Preprocessing
 
-- `avgCurrentA`, `avgVoltageV`  
-  - Both show variation consistent with different EV and charger configurations.
+-   Dropped missing values.
+-   One-hot encoding of categorical variables.
+-   Selected continuous features for clustering.
+-   StandardScaler applied.
 
-### 2.2 Missing Values
+## 5. Clustering
 
-- `df.isnull().sum()` indicates **zero missing values** across all columns.  
-- No imputation was required in the current workflow.
+### K-Means (k=3)
 
----
+-   Applied on standardized numeric variables.
+-   PCA used for visualization.
 
-## 3. Exploratory Data Analysis (EDA)
+### Silhouette Score
 
-The notebook includes basic univariate and multivariate EDA.
+    0.229
 
-### 3.1 Univariate Distributions
+→ Weak cluster separation.
 
-Using `sns.histplot` with KDE for:
+## 6. SoH Labeling Issue
 
-- `avgPowerW`
-- `avgCurrentA`
-- `avgVoltageV`
+The notebook compares **standardized centroids** with **raw-unit
+thresholds**, causing all clusters to be labeled **Degraded**.
 
-From the plotted distributions:
+Fix required: evaluate centroids in raw scale or adjust thresholds to
+z-score units.
 
-- `avgPowerW` shows a broad distribution around typical fast-charging power levels with a long tail towards higher power.
-- `avgCurrentA` is widely spread, reflecting different charging speeds and station capabilities.
-- `avgVoltageV` is more concentrated, consistent with typical EV pack voltages, but still with some spread due to varying chemistries and architectures.
+## 7. Recommended Improvements
 
-(These can be extended later to include `soc`, `tempC`, and `sampleTime10sIncrement`.)
+-   Use raw centroids for SoH rules.
+-   Optimize k using elbow or silhouette methods.
+-   Consider clustering with categorical variables.
+-   Better modularization of code.
+-   Improve EDA with more segmentation.
 
-### 3.2 Correlation Analysis
+## 8. Conclusion
 
-A correlation matrix is computed for:
-
-```python
-['avgPowerW', 'avgCurrentA', 'avgVoltageV', 'soc', 'tempC', 'sampleTime10sIncrement']
+The notebook is well-structured but the SoH logic is invalid due to
+scale mismatch. Clustering structure is weak and requires optimization
+for meaningful interpretation.
