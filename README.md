@@ -76,6 +76,5 @@ z-score units.
 
 ## 8. Conclusion
 
-The notebook is well-structured but the SoH logic is invalid due to
-scale mismatch. Clustering structure is weak and requires optimization
+Clustering structure is weak and requires optimization
 for meaningful interpretation.
